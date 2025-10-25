@@ -2,45 +2,41 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const path = require('path');
+const path = require('path'); // ← required for static serving
 
-// Serve React frontend
-app.use(express.static(path.join(__dirname, '../frontend/build')));
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
-});
-
-// Load environment variables
+// Load env variables
 dotenv.config();
 
-const app = express();
+const app = express(); // ← app must be initialized BEFORE using it
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI, {  // ✅ use the correct env variable name
+// MongoDB connection
+mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
 .then(() => console.log('✅ MongoDB Connected'))
 .catch(err => console.log('❌ MongoDB Error:', err));
 
-// Test Route
-app.get('/', (req, res) => {
-  res.json({ message: 'Eswari Physiotherapy API Running' });
-});
+// Serve React frontend build
+app.use(express.static(path.join(__dirname, '../frontend/build')));
 
-// Import Routes
+// API Routes
 const authRoutes = require('./routes/auth');
 const bookingRoutes = require('./routes/bookings');
 const adminRoutes = require('./routes/admin');
 
-// Use Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/admin', adminRoutes);
+
+// Fallback: send index.html for React routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/build/index.html'));
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
